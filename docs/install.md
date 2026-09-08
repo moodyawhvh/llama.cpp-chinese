@@ -1,6 +1,8 @@
-# Install pre-built version of llama.cpp
+> 🌐 本文档由 [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) 翻译,英文原版见原项目。
 
-| Install via | Windows | Mac  | Linux |
+# 安装 llama.cpp 预编译版本
+
+| 安装渠道 | Windows | Mac  | Linux |
 |-------------|---------|------|-------|
 | conda-forge | ✅      | ✅   | ✅   |
 | Winget      | ✅      |      |      |
@@ -8,12 +10,12 @@
 | MacPorts    |         | ✅   |      |
 | Nix         |         | ✅   | ✅   |
 
-## conda-forge (Windows, Mac and Linux)
+## conda-forge(Windows、Mac 和 Linux)
 
-conda-forge provides builds for:
- - CUDA (Windows and Linux)
- - Vulkan (Windows and Linux)
- - Apple Metal (macOS)
+conda-forge 提供以下构建:
+ - CUDA(Windows 和 Linux)
+ - Vulkan(Windows 和 Linux)
+ - Apple Metal(macOS)
 
 ```sh
 conda install -c conda-forge llama.cpp
@@ -24,55 +26,55 @@ mamba install -c conda-forge llama.cpp
 ```
 
 ```sh
-# Project-local installation
+# 项目本地安装
 pixi add llama.cpp
 
-# Global installation
+# 全局安装
 pixi global install llama.cpp
 ```
 
-This distribution is managed on [`conda-forge/llama.cpp-feedstock`](https://github.com/conda-forge/llama.cpp-feedstock/).
+该发行版由 [`conda-forge/llama.cpp-feedstock`](https://github.com/conda-forge/llama.cpp-feedstock/) 维护。
 
-Shall you have any problems, please open an issue on [its issue tracker](https://github.com/conda-forge/llama.cpp-feedstock/issues).
+如遇任何问题,请到[它的 issue 跟踪器](https://github.com/conda-forge/llama.cpp-feedstock/issues)提 issue。
 
-## Winget (Windows)
+## Winget(Windows)
 
 ```sh
 winget install llama.cpp
 ```
 
-The package is automatically updated with new `llama.cpp` releases. More info: https://github.com/ggml-org/llama.cpp/issues/8188
+该包会随 `llama.cpp` 新版本发布自动更新。更多信息:https://github.com/ggml-org/llama.cpp/issues/8188
 
-## Homebrew (Mac and Linux)
+## Homebrew(Mac 和 Linux)
 
 ```sh
 brew install llama.cpp
 ```
 
-The formula is automatically updated with new `llama.cpp` releases. More info: https://github.com/ggml-org/llama.cpp/discussions/7668
+该 formula 会随 `llama.cpp` 新版本发布自动更新。更多信息:https://github.com/ggml-org/llama.cpp/discussions/7668
 
-## MacPorts (Mac)
+## MacPorts(Mac)
 
 ```sh
 sudo port install llama.cpp
 ```
 
-See also: https://ports.macports.org/port/llama.cpp/details/
+另见:https://ports.macports.org/port/llama.cpp/details/
 
-## Nix (Mac and Linux)
+## Nix(Mac 和 Linux)
 
 ```sh
 nix profile install nixpkgs#llama-cpp
 ```
 
-For flake enabled installs.
+适用于启用 flake 的安装。
 
-Or
+或者
 
 ```sh
 nix-env --file '<nixpkgs>' --install --attr llama-cpp
 ```
 
-For non-flake enabled installs.
+适用于未启用 flake 的安装。
 
-This expression is automatically updated within the [nixpkgs repo](https://github.com/NixOS/nixpkgs/blob/nixos-24.05/pkgs/by-name/ll/llama-cpp/package.nix#L164).
+该表达式会在 [nixpkgs 仓库](https://github.com/NixOS/nixpkgs/blob/nixos-24.05/pkgs/by-name/ll/llama-cpp/package.nix#L164)内自动更新。

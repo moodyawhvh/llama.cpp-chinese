@@ -1,106 +1,108 @@
-# Security Policy
+> 🌐 本文档由 [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) 翻译,英文原版见原项目。
 
- - [**Reporting a vulnerability**](#reporting-a-vulnerability)
- - [**Requirements**](#requirements)
- - [**Covered Topics**](#covered-topics)
- - [**Using llama.cpp securely**](#using-llamacpp-securely)
-   - [Untrusted models](#untrusted-models)
-   - [Untrusted inputs](#untrusted-inputs)
-   - [Data privacy](#data-privacy)
-   - [Untrusted environments or networks](#untrusted-environments-or-networks)
-   - [Multi-Tenant environments](#multi-tenant-environments)
+# 安全策略
 
-## Reporting a vulnerability
+ - [**报告漏洞**](#报告漏洞)
+ - [**要求**](#要求)
+ - [**覆盖范围**](#覆盖范围)
+ - [**安全地使用 llama.cpp**](#安全地使用-llamacpp)
+   - [不可信的模型](#不可信的模型)
+   - [不可信的输入](#不可信的输入)
+   - [数据隐私](#数据隐私)
+   - [不可信的环境或网络](#不可信的环境或网络)
+   - [多租户环境](#多租户环境)
+
+## 报告漏洞
 
 > [!IMPORTANT]
-> The private security disclosure program is disabled until further notice. Please submit patches with fixes directly to the repo as public PRs. Emails will be ignored.
+> 私密安全披露计划已暂停,恢复时间另行通知。请将修复补丁以公开 PR 的形式直接提交到仓库,邮件将被忽略。
 
-If you have discovered a security vulnerability in this project that falls inside the [covered topics](#covered-topics), please report it privately. **Do not disclose it as a public issue.** This gives us time to work with you to fix the issue before public exposure, reducing the chance that the exploit will be used before a patch is released.
+如果你在本项目中发现属于[覆盖范围](#覆盖范围)的安全漏洞,请私密上报。**不要以公开 issue 的形式披露。**这样我们可以在公开之前与你协作修复问题,降低漏洞在补丁发布前被利用的风险。
 
-Please disclose it as a private [security advisory](https://github.com/ggml-org/llama.cpp/security/advisories/new).
+请通过私密的 [security advisory(安全通告)](https://github.com/ggml-org/llama.cpp/security/advisories/new) 进行披露。
 
-A team of volunteers on a reasonable-effort basis maintains this project. As such, please give us at least 90 days to work on a fix before public exposure.
+本项目由志愿者团队在"尽力而为"的基础上维护,因此请至少给与我们 90 天的修复时间,再考虑公开披露。
 
-### AI-powered code scan
+### AI 驱动的代码扫描
 
-llama.cpp has an AI security scanner that scans the code periodically. The full prompts and tool set can be found in [ggml-org/security-scan-prompt](https://github.com/ggml-org/security-scan-prompt).
+llama.cpp 内置一个 AI 安全扫描器,会定期扫描代码。完整的提示词和工具集见 [ggml-org/security-scan-prompt](https://github.com/ggml-org/security-scan-prompt)。
 
-We greatly appreciate reports that reflect genuine research effort, and we are happy to spend our time reviewing them. Findings that an autonomous AI agent can surface on its own add little on top of the scans we already run.
+我们非常欢迎体现真实研究投入的报告,也乐于花时间评审。而自主 AI 代理自己就能跑出来的发现,相对我们已有的扫描并没有额外价值。
 
-### Requirements
+### 要求
 
-Before submitting your report, ensure you meet the following requirements:
+提交报告前,请确认满足以下要求:
 
-- You have read this policy and fully understand it.
-- You have searched for existing discussions of the issue. If it has already been reported, your report will likely be rejected as a duplicate.
-- AI is only permitted in an assistive capacity as stated in [AGENTS.md](AGENTS.md). We do not accept reports that are written exclusively by AI.
-- Your report must include a working Proof-of-Concept in the form of a script and/or attached files.
+- 你已阅读本政策并完全理解。
+- 你已搜索过关于该问题的既有讨论。如果已被报告过,你的报告很可能因重复而被拒绝。
+- 仅允许按 [AGENTS.md](AGENTS.md) 所述以辅助方式使用 AI。我们不接受完全由 AI 撰写的报告。
+- 报告必须附带可用的概念验证(Proof-of-Concept),形式为脚本和/或附件文件。
 
-Maintainers reserve the right to close the report if these requirements are not fulfilled.
+如未满足上述要求,维护者保留关闭报告的权利。
 
-### Covered Topics
+### 覆盖范围
 
-Only vulnerabilities that fall within these parts of the project are considered valid. For problems falling outside of this list, please report them as issues.
+只有落在项目以下部分的漏洞才被视为有效。不在此列表内的问题请作为普通 issue 上报。
 
 - `src/**/*`
 - `ggml/**/*`
 - `gguf-py/**/*`
-- `tools/server/*`, **excluding** the following topics:
+- `tools/server/*`,**但不包括**以下主题:
     - Web UI
-    - Features marked as experimental
-    - Features not recommended for use in untrusted environments (e.g., router, MCP)
-    - Bugs that can lead to Denial-of-Service attack
+    - 标记为实验性的功能
+    - 不建议在不可信环境中使用的功能(如 router、MCP)
+    - 可能导致拒绝服务攻击的 bug
 
-Note that none of the topics under [Using llama.cpp securely](#using-llamacpp-securely) are considered vulnerabilities in LLaMA C++.
+注意,[安全地使用 llama.cpp](#安全地使用-llamacpp) 项下的所有主题都不被视为 LLaMA C++ 的漏洞。
 
-Denial-of-Service (DoS) bugs are generally not treated as vulnerabilities. We don't reject them outright, but we look at them case-by-case and only accept those that are genuinely worth fixing.
+拒绝服务(DoS)类 bug 一般不按漏洞处理。我们不会一刀切拒绝,而是逐例评估,只接受确实值得修复的。
 
-For vulnerabilities that fall within the `vendor` directory, please report them directly to the third-party project.
+`vendor` 目录内的漏洞请直接上报给对应的第三方项目。
 
-## Using llama.cpp securely
+## 安全地使用 llama.cpp
 
-### Untrusted models
-Be careful when running untrusted models. This classification includes models created by unknown developers or utilizing data obtained from unknown sources.
+### 不可信的模型
+运行不可信的模型时要小心。此类别包括由不明开发者创建的模型,或使用了来源不明数据的模型。
 
-*Always execute untrusted models within a secure, isolated environment such as a sandbox* (e.g., containers, virtual machines). This helps protect your system from potentially malicious code.
+*务必在安全隔离的环境(如沙箱)中运行不可信的模型*(例如容器、虚拟机)。这可以保护你的系统免受潜在恶意代码的侵害。
 
 > [!NOTE]
-> The trustworthiness of a model is not binary. You must always determine the proper level of caution depending on the specific model and how it matches your use case and risk tolerance.
+> 模型的可信度不是非黑即白的。你必须始终根据具体模型,以及它与你使用场景和风险承受能力的匹配程度,来判断应采取的谨慎级别。
 
-### Untrusted inputs
+### 不可信的输入
 
-Some models accept various input formats (text, images, audio, etc.). The libraries converting these inputs have varying security levels, so it's crucial to isolate the model and carefully pre-process inputs to mitigate script injection risks.
+部分模型接受多种输入格式(文本、图像、音频等)。负责转换这些输入的库安全水平参差不齐,因此隔离模型并认真预处理输入、降低脚本注入风险至关重要。
 
-For maximum security when handling untrusted inputs, you may need to employ the following:
+要在处理不可信输入时获得最大安全性,可能需要采取以下措施:
 
-* Sandboxing: Isolate the environment where the inference happens.
-* Pre-analysis: Check how the model performs by default when exposed to prompt injection (e.g. using [fuzzing for prompt injection](https://github.com/FonduAI/awesome-prompt-injection?tab=readme-ov-file#tools)). This will give you leads on how hard you will have to work on the next topics.
-* Updates: Keep both LLaMA C++ and your libraries updated with the latest security patches.
-* Input Sanitation: Before feeding data to the model, sanitize inputs rigorously. This involves techniques such as:
-    * Validation: Enforce strict rules on allowed characters and data types.
-    * Filtering: Remove potentially malicious scripts or code fragments.
-    * Encoding: Convert special characters into safe representations.
-    * Verification: Run tooling that identifies potential script injections (e.g. [models that detect prompt injection attempts](https://python.langchain.com/docs/guides/safety/hugging_face_prompt_injection)).
+* 沙箱隔离:将推理运行的环境隔离开。
+* 预先分析:检查模型在遭受提示注入时的默认表现(例如使用[提示注入 fuzzing 工具](https://github.com/FonduAI/awesome-prompt-injection?tab=readme-ov-file#tools))。这能为你后续需要下多大力气提供参考。
+* 更新:让 LLaMA C++ 和你所用的库都保持最新安全补丁。
+* 输入净化:在把数据喂给模型之前严格净化输入,包括如下技术:
+    * 校验:对允许的字符和数据类型执行严格规则。
+    * 过滤:移除潜在的恶意脚本或代码片段。
+    * 编码:将特殊字符转换为安全的表示形式。
+    * 检测:运行能识别潜在脚本注入的工具(例如[可检测提示注入尝试的模型](https://python.langchain.com/docs/guides/safety/hugging_face_prompt_injection))。
 
-### Data privacy
+### 数据隐私
 
-To protect sensitive data from potential leaks or unauthorized access, it is crucial to sandbox the model execution. This means running the model in a secure, isolated environment, which helps mitigate many attack vectors.
+为防止敏感数据泄露或被未授权访问,对模型执行做沙箱隔离至关重要。也就是在安全隔离的环境中运行模型,这能缓解大量攻击路径。
 
-### Untrusted environments or networks
+### 不可信的环境或网络
 
-If you can't run your models in a secure and isolated environment or if it must be exposed to an untrusted network, make sure to take the following security precautions:
-* Do not use the RPC backend, [ggml-rpc-server](https://github.com/ggml-org/llama.cpp/tree/master/tools/rpc) and [llama-server](https://github.com/ggml-org/llama.cpp/tree/master/tools/server) functionality (see https://github.com/ggml-org/llama.cpp/pull/13061).
-* Confirm the hash of any downloaded artifact (e.g. pre-trained model weights) matches a known-good value.
-* Encrypt your data if sending it over the network.
+如果你无法在安全隔离的环境中运行模型,或模型必须暴露在不可信网络中,请务必采取以下安全预防措施:
+* 不要使用 RPC 后端、[ggml-rpc-server](https://github.com/ggml-org/llama.cpp/tree/master/tools/rpc) 和 [llama-server](https://github.com/ggml-org/llama.cpp/tree/master/tools/server) 功能(见 https://github.com/ggml-org/llama.cpp/pull/13061 )。
+* 确认任何下载产物(如预训练权重)的哈希值与已知良好值一致。
+* 通过网络传输数据时进行加密。
 
-### Multi-Tenant environments
+### 多租户环境
 
-If you intend to run multiple models in parallel with shared memory, it is your responsibility to ensure the models do not interact or access each other's data. The primary areas of concern are tenant isolation, resource allocation, model sharing and hardware attacks.
+如果你打算以共享内存的方式并行运行多个模型,确保模型之间不相互干扰、不越权访问彼此数据是你自己的责任。重点关注租户隔离、资源分配、模型共享和硬件攻击。
 
-1. Tenant Isolation: Models should run separately with strong isolation methods to prevent unwanted data access. Separating networks is crucial for isolation, as it prevents unauthorized access to data or models and malicious users from sending graphs to execute under another tenant's identity.
+1. 租户隔离:模型应以强隔离方式分别运行,防止意外的数据访问。网络隔离是关键,它能防止对数据或模型的未授权访问,也能防止恶意用户以其他租户的身份投递计算图执行。
 
-2. Resource Allocation: A denial of service caused by one model can impact the overall system health. Implement safeguards like rate limits, access controls, and health monitoring.
+2. 资源分配:一个模型引发的拒绝服务可能影响整个系统的健康。请实施限流、访问控制、健康监控等防护措施。
 
-3. Model Sharing: In a multitenant model sharing design, tenants and users must understand the security risks of running code provided by others. Since there are no reliable methods to detect malicious models, sandboxing the model execution is the recommended approach to mitigate the risk.
+3. 模型共享:在多租户模型共享设计中,租户和用户必须理解运行他人代码的安全风险。由于目前没有可靠手段检测恶意模型,对模型执行做沙箱隔离是推荐的缓解方式。
 
-4. Hardware Attacks: GPUs or TPUs can also be attacked. [Researches](https://scholar.google.com/scholar?q=gpu+side+channel) has shown that side channel attacks on GPUs are possible, which can make data leak from other models or processes running on the same system at the same time.
+4. 硬件攻击:GPU 或 TPU 同样可能被攻击。[研究](https://scholar.google.com/scholar?q=gpu+side+channel)表明,针对 GPU 的侧信道攻击是可行的,可能导致同一系统上同时运行的其他模型或进程的数据泄露。
