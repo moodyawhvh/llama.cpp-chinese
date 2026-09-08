@@ -1,16 +1,18 @@
-# Release process
+> 🌐 本文档由 [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) 翻译,英文原版见原项目。
 
-llama.cpp uses [semantic versioning](https://semver.org) (`MAJOR.MINOR.PATCH`).
+# 发布流程
 
-## Version bump guidelines
+llama.cpp 采用[语义化版本](https://semver.org)(`主版本.次版本.补丁版本`)。
 
-| Change type | Version component |
+## 版本号递增指南
+
+| 改动类型 | 递增的版本位 |
 |---|---|
-| Breaking change to the public C API (`include/llama.h`)         | `MAJOR` |
-| Backward-compatible features, model support, or API addition    | `MINOR` |
-| Bug fix with no API change                                      | `PATCH` |
+| 公开 C API(`include/llama.h`)的不兼容改动         | `主版本(MAJOR)` |
+| 向后兼容的新功能、模型支持或 API 新增    | `次版本(MINOR)` |
+| 不涉及 API 变更的 bug 修复                                      | `补丁版本(PATCH)` |
 
-The version is set in the three variables at the top of the root `CMakeLists.txt`:
+版本号在根目录 `CMakeLists.txt` 顶部的三个变量中设置:
 
 ```cmake
 set(LLAMA_VERSION_MAJOR 0)
@@ -18,38 +20,25 @@ set(LLAMA_VERSION_MINOR 1)
 set(LLAMA_VERSION_PATCH 0)
 ```
 
-_A version bump should be included in the PR that introduces the change, or in a
-dedicated bump commit merged before the release is cut._
+_版本号递增应包含在引入该改动的 PR 中,或在发版前合并的一个专门的 bump 提交里。_
 
-_TODO: add PR labels (`semver: patch`, `semver: minor`, `semver: major`) to help
-identify which PRs require a version bump before cutting a release._
+_TODO: 增加 PR 标签(`semver: patch`、`semver: minor`、`semver: major`),帮助识别哪些 PR 在发版前需要递增版本号。_
 
-## Making a release
+## 制作发布
 
-Releases are created by running the [make-release](.github/workflows/make-release.yml)
-which is a manual workflow.
+发布通过手动触发的 [make-release](.github/workflows/make-release.yml) 工作流完成。
 
-The workflow runs against the branch selected in the "Run workflow" dialog
-(default `master`) and takes an optional `commit` SHA. When a commit is given,
-the workflow validates that the commit belongs to the branch and is not older
-than 3 days from the branch HEAD, then releases that commit instead of the
-branch HEAD.
+该工作流运行在 "Run workflow" 对话框中选择的分支上(默认 `master`),可选传入一个 `commit` SHA。指定了 commit 时,工作流会校验该 commit 属于该分支、且距分支 HEAD 不超过 3 天,然后发布该 commit 而不是分支 HEAD。
 
-The workflow creates an annotated git tag (e.g. `v0.1.0`) and pushes it to the
-remote. No GitHub Release object is created, the tag is the release artifact.
+工作流会创建一个附注 git 标签(如 `v0.1.0`)并推送到远程。不会创建 GitHub Release 对象,标签本身就是发布产物。
 
-## Building a release
+## 构建发布版
 
-By default, `LLAMA_BUILD_IS_DEV=ON` which appends a `-dev` suffix to `LLAMA_VERSION`,
-marking the build as a nightly/development build. Distributors building from a
-release tag must pass `-DLLAMA_BUILD_IS_DEV=OFF` to produce a clean version string
-(e.g. `0.1.0` instead of `0.1.0-dev`).
+默认 `LLAMA_BUILD_IS_DEV=ON`,会给 `LLAMA_VERSION` 追加 `-dev` 后缀,标记为 nightly/开发构建。从发布标签构建的分发方必须传 `-DLLAMA_BUILD_IS_DEV=OFF`,以生成干净的版本号字符串(如 `0.1.0` 而非 `0.1.0-dev`)。
 
-## How releases reach users
-Currently releases are not published to github releases, only nightly/development
-builds are available there. The way users can access releases are using the following
-channels:
+## 发布如何到达用户
+目前发布版不发布到 GitHub Releases,那里只有 nightly/开发构建。用户获取发布版的渠道如下:
 
-- **llama-install.sh**  — downloads pre-built binaries built from the release tag.
-- **Package managers**  — consume the git tag directly.
-- **Build from source** — users clone the repo and check out the tag.
+- **llama-install.sh**  — 下载基于发布标签构建的预编译二进制。
+- **包管理器**  — 直接消费 git 标签。
+- **从源码构建** — 用户克隆仓库并 checkout 对应标签。

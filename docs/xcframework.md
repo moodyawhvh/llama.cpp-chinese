@@ -1,8 +1,8 @@
+> 🌐 本文档由 [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) 翻译,英文原版见原项目。
+
 # XCFramework
 
-The XCFramework is a precompiled version of the library for iOS, visionOS, tvOS,
-and macOS. It can be used in Swift projects without the need to compile the
-library from source. For example:
+XCFramework 是面向 iOS、visionOS、tvOS 和 macOS 的库预编译版本。可以在 Swift 项目中直接使用,无需从源码编译库。例如:
 
 ```swift
 // swift-tools-version: 5.10
@@ -27,5 +27,4 @@ let package = Package(
 )
 ```
 
-The above example is using an intermediate build `b5046` of the library. This can be modified
-to use a different version by changing the URL and checksum.
+上面的示例使用的是库的中间构建版本 `b5046`。修改 URL 和校验和即可改用其他版本。
