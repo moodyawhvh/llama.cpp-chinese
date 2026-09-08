@@ -1,21 +1,25 @@
-# Build llama.cpp locally
+> 🌐 本文档由 [ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp) 翻译,英文原版见原项目。
+>
+> 📝 注:原文超过 10000 字符,本译文覆盖核心构建章节,个别小众平台的冗长细节有精简,完整内容以英文原版为准。
 
-The main product of this project is the `llama` library. Its C-style interface can be found in [include/llama.h](../include/llama.h).
+# 本地构建 llama.cpp
 
-The project also includes many example programs and tools using the `llama` library. The examples range from simple, minimal code snippets to sophisticated sub-projects such as an OpenAI-compatible HTTP server.
+本项目的主要产物是 `llama` 库。其 C 风格接口见 [include/llama.h](../include/llama.h)。
 
-**To get the Code:**
+项目还包含许多使用 `llama` 库的示例程序和工具,从简单的最小代码片段,到复杂的子项目(如 OpenAI 兼容的 HTTP server)。
+
+**获取代码:**
 
 ```bash
 git clone https://github.com/ggml-org/llama.cpp
 cd llama.cpp
 ```
 
-The following sections describe how to build with different backends and options.
+以下各节介绍如何使用不同后端和选项进行构建。
 
-* [CPU Build](#cpu-build)
-* [BLAS Build](#blas-build)
-* [Metal Build](#metal-build)
+* [CPU 构建](#cpu-构建)
+* [BLAS 构建](#blas-构建)
+* [Metal 构建](#metal-构建)
 * [SYCL](#sycl)
 * [CUDA](#cuda)
 * [MUSA](#musa)
@@ -25,87 +29,87 @@ The following sections describe how to build with different backends and options
 * [ZenDNN](#zendnn)
 * [Arm® KleidiAI™](#arm-kleidiai)
 * [OpenCL](#opencl)
-* [Android](#android-1)
+* [Android](#android)
 * [OpenVINO](#openvino)
 * [Hexagon](#hexagon)
-* [Notes about GPU-accelerated backends](#notes-about-gpu-accelerated-backends)
+* [关于 GPU 加速后端的说明](#关于-gpu-加速后端的说明)
 
-## CPU Build
+## CPU 构建
 
-Build llama.cpp using `CMake`:
+使用 `CMake` 构建 llama.cpp:
 
 ```bash
 cmake -B build
 cmake --build build --config Release
 ```
 
-**Notes**:
+**注意**:
 
-- For faster compilation, add the `-j` argument to run multiple jobs in parallel, or use a generator that does this automatically such as Ninja. For example, `cmake --build build --config Release -j 8` will run 8 jobs in parallel.
-- For faster repeated compilation, install [ccache](https://ccache.dev/)
-- For debug builds, there are two cases:
+- 想编译更快,加 `-j` 参数并行执行多个任务,或使用 Ninja 这类自动并行的生成器。例如 `cmake --build build --config Release -j 8` 会并行跑 8 个任务。
+- 想让重复编译更快,安装 [ccache](https://ccache.dev/)。
+- Debug 构建分两种情况:
 
-    1. Single-config generators (e.g. default = `Unix Makefiles`; note that they just ignore the `--config` flag):
+    1. 单配置生成器(如默认的 `Unix Makefiles`;注意它们会直接忽略 `--config` 参数):
 
        ```bash
        cmake -B build -DCMAKE_BUILD_TYPE=Debug
        cmake --build build
        ```
 
-    2. Multi-config generators (`-G` param set to Visual Studio, XCode...):
+    2. 多配置生成器(`-G` 参数设为 Visual Studio、XCode 等):
 
        ```bash
        cmake -B build -G "Xcode"
        cmake --build build --config Debug
        ```
 
-    For more details and a list of supported generators, see the [CMake documentation](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html).
-- For static builds, add `-DBUILD_SHARED_LIBS=OFF`:
+    更多细节和支持的生成器列表,见 [CMake 文档](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html)。
+- 静态构建,加 `-DBUILD_SHARED_LIBS=OFF`:
   ```
   cmake -B build -DBUILD_SHARED_LIBS=OFF
   cmake --build build --config Release
   ```
 
-- Building for Windows (x86, x64 and arm64) with MSVC or clang as compilers:
-    - Install Visual Studio 2022, e.g. via the [Community Edition](https://visualstudio.microsoft.com/vs/community/). In the installer, select at least the following options (this also automatically installs the required additional tools like CMake,...):
-    - Tab Workload: Desktop-development with C++
-    - Tab Components (select quickly via search): C++-_CMake_ Tools for Windows, _Git_ for Windows, C++-_Clang_ Compiler for Windows, MS-Build Support for LLVM-Toolset (clang)
-    - Please remember to always use a Developer Command Prompt / PowerShell for VS2022 for git, build, test
-    - For Windows on ARM (arm64, WoA), build with:
+- 在 Windows(x86、x64、arm64)上用 MSVC 或 clang 作为编译器构建:
+    - 安装 Visual Studio 2022,例如[社区版](https://visualstudio.microsoft.com/vs/community/)。安装器中至少勾选以下选项(会自动装上 CMake 等所需工具):
+    - "工作负荷"页:使用 C++ 的桌面开发
+    - "单个组件"页(可用搜索快速定位):适用于 Windows 的 C++_CMake_ 工具、适用于 Windows 的 _Git_、适用于 Windows 的 C++_Clang_ 编译器、LLVM 工具集的 MS-Build 支持(clang)
+    - 记住:git、构建、测试请始终在适用于 VS2022 的开发人员命令提示符 / PowerShell 中进行
+    - Windows on ARM(arm64、WoA)构建:
       ```bash
       cmake --preset arm64-windows-llvm-release -D GGML_OPENMP_FETCH=ON
       cmake --build build-arm64-windows-llvm-release
       ```
-      - Use `ARM64 Native Tools Command Prompt for VS 2022` if you are building on an ARM64 machine.
-      - `GGML_OPENMP_FETCH` downloads the official LLVM OpenMP runtime and requires Clang, 7-Zip and network access during configuration. CMake selects the runtime from the target architecture, so this also works when cross-compiling for WoA from x64. The extracted header, import library, DLL and OpenMP license are placed under `build/_deps`. The build copies `libomp.dll` and `LICENSE-LLVM-OpenMP` to the runtime output directory and installs them together. Omit the option to use CMake's normal OpenMP detection, or pass `-D GGML_OPENMP=OFF` to disable OpenMP.
-    - For building with ninja generator and clang compiler as default:
-      - Set path:
+      - 在 ARM64 机器上构建请使用 `ARM64 Native Tools Command Prompt for VS 2022`。
+      - `GGML_OPENMP_FETCH` 会下载官方 LLVM OpenMP 运行时,配置阶段需要 Clang、7-Zip 和网络。CMake 会按目标架构选择运行时,因此从 x64 交叉编译 WoA 时同样可用。解压出的头文件、导入库、DLL 和 OpenMP 许可证放在 `build/_deps` 下,构建会把 `libomp.dll` 和 `LICENSE-LLVM-OpenMP` 复制到运行时输出目录并一并安装。不传该选项则走 CMake 常规 OpenMP 探测,或传 `-D GGML_OPENMP=OFF` 直接禁用 OpenMP。
+    - 使用 ninja 生成器 + clang 编译器为默认组合构建:
+      - 设置路径:
         ```
         set LIB=C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\x64;C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.41.34120\lib\x64\uwp;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\ucrt\x64
         ```
-      - Run:
+      - 执行:
         ```bash
         cmake --preset x64-windows-llvm-release
         cmake --build build-x64-windows-llvm-release
         ```
-- If you want HTTPS/TLS features, you may install OpenSSL development libraries. If not installed, the project will build and run without SSL support.
+- 如果需要 HTTPS/TLS 功能,可安装 OpenSSL 开发库。未安装时项目也能正常构建运行,只是不带 SSL 支持。
   - **Debian / Ubuntu:** `sudo apt-get install libssl-dev`
   - **Fedora / RHEL / Rocky / Alma:** `sudo dnf install openssl-devel`
   - **Arch / Manjaro:** `sudo pacman -S openssl`
 
-## BLAS Build
+## BLAS 构建
 
-Building the program with BLAS support may lead to some performance improvements in prompt processing using batch sizes higher than 32 (the default is 512). Using BLAS doesn't affect the generation performance. There are currently several different BLAS implementations available for build and use:
+带 BLAS 支持构建,可在批量大于 32 的 prompt 处理(默认 512)上获得一定性能提升。BLAS 不影响生成性能。目前有多种 BLAS 实现可选:
 
 ### Accelerate Framework
 
-This is only available on Mac PCs and it's enabled by default. You can just build using the normal instructions.
+仅 Mac 可用,默认启用,按常规方式构建即可。
 
 ### OpenBLAS
 
-This provides BLAS acceleration using only the CPU. Make sure to have OpenBLAS installed on your machine.
+仅用 CPU 提供 BLAS 加速。确保机器上已安装 OpenBLAS。
 
-- Using `CMake` on Linux:
+- Linux 上使用 `CMake`:
 
     ```bash
     cmake -B build -DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS
@@ -114,99 +118,97 @@ This provides BLAS acceleration using only the CPU. Make sure to have OpenBLAS i
 
 ### BLIS
 
-Check [BLIS.md](./backend/BLIS.md) for more information.
+更多信息见 [BLIS.md](./backend/BLIS.md)。
 
 ### Intel oneMKL
 
-Building through oneAPI compilers will make avx_vnni instruction set available for intel processors that do not support avx512 and avx512_vnni. Please note that this build config **does not support Intel GPU**. For Intel GPU support, please refer to [llama.cpp for SYCL](./backend/SYCL.md).
+通过 oneAPI 编译器构建,可以为不支持 avx512 / avx512_vnni 的 Intel 处理器启用 avx_vnni 指令集。注意此构建配置**不支持 Intel GPU**。Intel GPU 支持请参考 [llama.cpp for SYCL](./backend/SYCL.md)。
 
-- Using manual oneAPI installation:
-  By default, `GGML_BLAS_VENDOR` is set to `Generic`, so if you already sourced intel environment script and assign `-DGGML_BLAS=ON` in cmake, the mkl version of Blas will automatically been selected. Otherwise please install oneAPI and follow the below steps:
+- 手动安装 oneAPI:
+  默认 `GGML_BLAS_VENDOR` 为 `Generic`,如果已 source intel 环境脚本并在 cmake 中加 `-DGGML_BLAS=ON`,会自动选中 MKL 版 BLAS。否则请安装 oneAPI 并按以下步骤:
     ```bash
-    source /opt/intel/oneapi/setvars.sh # You can skip this step if  in oneapi-basekit docker image, only required for manual installation
+    source /opt/intel/oneapi/setvars.sh # oneapi-basekit docker 镜像内可跳过,仅手动安装时需要
     cmake -B build -DGGML_BLAS=ON -DGGML_BLAS_VENDOR=Intel10_64lp -DCMAKE_C_COMPILER=icx -DCMAKE_CXX_COMPILER=icpx -DGGML_NATIVE=ON
     cmake --build build --config Release
     ```
 
-- Using oneAPI docker image:
-  If you do not want to source the environment vars and install oneAPI manually, you can also build the code using intel docker container: [oneAPI-basekit](https://hub.docker.com/r/intel/oneapi-basekit). Then, you can use the commands given above.
+- 使用 oneAPI docker 镜像:
+  不想手动配环境的话,可以直接用 intel 官方容器构建:[oneAPI-basekit](https://hub.docker.com/r/intel/oneapi-basekit),然后使用上面的命令。
 
-Check [Optimizing and Running LLaMA2 on Intel® CPU](https://builders.intel.com/solutionslibrary/optimizing-and-running-llama2-on-intel-cpu) for more information.
+更多信息见 [Optimizing and Running LLaMA2 on Intel® CPU](https://builders.intel.com/solutionslibrary/optimizing-and-running-llama2-on-intel-cpu)。
 
-### Other BLAS libraries
+### 其他 BLAS 库
 
-Any other BLAS library can be used by setting the `GGML_BLAS_VENDOR` option. See the [CMake documentation](https://cmake.org/cmake/help/latest/module/FindBLAS.html#blas-lapack-vendors) for a list of supported vendors.
+设置 `GGML_BLAS_VENDOR` 选项即可使用其他 BLAS 库。支持的厂商列表见 [CMake 文档](https://cmake.org/cmake/help/latest/module/FindBLAS.html#blas-lapack-vendors)。
 
-## Metal Build
+## Metal 构建
 
-On MacOS, Metal is enabled by default. Using Metal makes the computation run on the GPU.
-To disable the Metal build at compile time use the `-DGGML_METAL=OFF` cmake option.
+MacOS 上 Metal 默认启用,使用 Metal 会让计算跑在 GPU 上。
+编译期禁用 Metal 使用 `-DGGML_METAL=OFF` cmake 选项。
 
-When built with Metal support, you can explicitly disable GPU inference with the `--n-gpu-layers 0` command-line argument.
+带 Metal 支持构建后,运行时可用 `--n-gpu-layers 0` 命令行参数显式禁用 GPU 推理。
 
 ## SYCL
 
-SYCL is a higher-level programming model to improve programming productivity on various hardware accelerators.
+SYCL 是一种更高层的编程模型,用于提升各类硬件加速器上的开发效率。
 
-llama.cpp based on SYCL is used to **support Intel GPU** (Data Center Max series, Flex series, Arc series, Built-in GPU and iGPU).
+基于 SYCL 的 llama.cpp 用于**支持 Intel GPU**(Data Center Max 系列、Flex 系列、Arc 系列、内置 GPU 与 iGPU)。
 
-For detailed info, please refer to [llama.cpp for SYCL](./backend/SYCL.md).
+详细信息见 [llama.cpp for SYCL](./backend/SYCL.md)。
 
 ## CUDA
 
-This provides GPU acceleration using an NVIDIA GPU. Make sure to have the [CUDA toolkit](https://developer.nvidia.com/cuda-toolkit) installed.
+使用 NVIDIA GPU 提供 GPU 加速。确保已安装 [CUDA toolkit](https://developer.nvidia.com/cuda-toolkit)。
 
-#### Download directly from NVIDIA
-You may find the official downloads here: [NVIDIA developer site](https://developer.nvidia.com/cuda-downloads).
-
-
-#### Compile and run inside a Fedora Toolbox Container
-We also have a [guide](./backend/CUDA-FEDORA.md) for setting up CUDA toolkit in a Fedora [toolbox container](https://containertoolbx.org/).
-
-**Recommended for:**
-- ***Necessary*** for users of [Atomic Desktops for Fedora](https://fedoraproject.org/atomic-desktops/); such as: [Silverblue](https://fedoraproject.org/atomic-desktops/silverblue/) and [Kinoite](https://fedoraproject.org/atomic-desktops/kinoite/).
-  - (there are no supported CUDA packages for these systems)
-- ***Necessary*** for users that have a host that is not a: [Supported Nvidia CUDA Release Platform](https://developer.nvidia.com/cuda-downloads).
-  - (for example, you may have [Fedora 42 Beta](https://fedoramagazine.org/announcing-fedora-linux-42-beta/) as your host operating system)
-- ***Convenient*** For those running [Fedora Workstation](https://fedoraproject.org/workstation/) or [Fedora KDE Plasma Desktop](https://fedoraproject.org/spins/kde), and want to keep their host system clean.
-- *Optionally* toolbox packages are available: [Arch Linux](https://archlinux.org/), [Red Hat Enterprise Linux >= 8.5](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux), or [Ubuntu](https://ubuntu.com/download)
+#### 直接从 NVIDIA 下载
+官方下载页:[NVIDIA developer site](https://developer.nvidia.com/cuda-downloads)。
 
 
-### Compilation
+#### 在 Fedora Toolbox 容器中编译运行
+我们也提供了在 Fedora [toolbox 容器](https://containertoolbx.org/)中配置 CUDA toolkit 的[指南](./backend/CUDA-FEDORA.md)。
 
-Make sure to read the notes about the CPU build for general instructions for e.g. speeding up the compilation.
+**适用于:**
+- [Fedora Atomic Desktops](https://fedoraproject.org/atomic-desktops/)(如 [Silverblue](https://fedoraproject.org/atomic-desktops/silverblue/)、[Kinoite](https://fedoraproject.org/atomic-desktops/kinoite/))用户***必选***
+  - (这些系统没有受支持的 CUDA 软件包)
+- 宿主机不属于 [受支持的 Nvidia CUDA 发布平台](https://developer.nvidia.com/cuda-downloads)的用户***必选***
+  - (例如宿主操作系统是 [Fedora 42 Beta](https://fedoramagazine.org/announcing-fedora-linux-42-beta/))
+- 运行 [Fedora Workstation](https://fedoraproject.org/workstation/) 或 [Fedora KDE Plasma Desktop](https://fedoraproject.org/spins/kde)、想保持宿主系统干净的用户会觉得***方便***
+- [Arch Linux](https://archlinux.org/)、[Red Hat Enterprise Linux >= 8.5](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux)、[Ubuntu](https://ubuntu.com/download) 也有 toolbox 软件包*可选*
+
+
+### 编译
+
+通用说明(如加速编译)请先阅读 CPU 构建一节的注意事项。
 
 ```bash
 cmake -B build -DGGML_CUDA=ON
 cmake --build build --config Release
 ```
 
-### Non-Native Builds
+### 非 Native 构建
 
-By default llama.cpp will be built for the hardware that is connected to the system at that time.
-For a build covering all CUDA GPUs, disable `GGML_NATIVE`:
+默认情况下,llama.cpp 会针对构建当时连接的硬件编译。
+要构建覆盖所有 CUDA GPU 的版本,禁用 `GGML_NATIVE`:
 
 ```bash
 cmake -B build -DGGML_CUDA=ON -DGGML_NATIVE=OFF
 ```
 
-The resulting binary should run on all CUDA GPUs with optimal performance, though some just-in-time compilation may be required.
+产物应能在所有 CUDA GPU 上以最优性能运行,部分场景可能需要少量即时编译。
 
-### Override Compute Capability Specifications
+### 覆盖算力(Compute Capability)规格
 
-If `nvcc` cannot detect your gpu, you may get compile warnings such as:
+如果 `nvcc` 检测不到你的 GPU,可能看到类似警告:
  ```text
 nvcc warning : Cannot find valid GPU for '-arch=native', default arch is used
 ```
 
-One option is to do a non-native build as described above.
-However, this will result in a large binary that takes a long time to compile.
-Alternatively it is also possible to explicitly specify CUDA architectures.
-This may also make sense for a non-native build, for that one should look at the logic in `ggml/src/ggml-cuda/CMakeLists.txt` as a starting point.
+一个办法是按上文做非 native 构建,但产物大、编译慢。
+也可以显式指定 CUDA 架构。非 native 构建同样可以这么干,具体可参考 `ggml/src/ggml-cuda/CMakeLists.txt` 中的逻辑作为起点。
 
-To override the default CUDA architectures:
+覆盖默认 CUDA 架构:
 
-#### 1. Take note of the `Compute Capability` of your NVIDIA devices: ["CUDA: Your GPU Compute > Capability"](https://developer.nvidia.com/cuda-gpus).
+#### 1. 记下你 NVIDIA 设备的 `Compute Capability`:["CUDA: Your GPU Compute > Capability"](https://developer.nvidia.com/cuda-gpus)。
 
 ```text
 GeForce RTX 4090      8.9
@@ -214,23 +216,23 @@ GeForce RTX 3080 Ti   8.6
 GeForce RTX 3070      8.6
 ```
 
-#### 2. Manually list each varying `Compute Capability` in the `CMAKE_CUDA_ARCHITECTURES` list.
+#### 2. 在 `CMAKE_CUDA_ARCHITECTURES` 列表中手动列出每个不同的 `Compute Capability`。
 
 ```bash
 cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="86;89"
 ```
 
-### Overriding the CUDA Version
+### 覆盖 CUDA 版本
 
-If you have multiple CUDA installations on your system and want to compile llama.cpp for a specific one, e.g. for CUDA 11.7 installed under `/opt/cuda-11.7`:
+系统里装了多个 CUDA、想指定用某个版本编译时(例如装在 `/opt/cuda-11.7` 的 CUDA 11.7):
 
 ```bash
 cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_COMPILER=/opt/cuda-11.7/bin/nvcc -DCMAKE_INSTALL_RPATH="/opt/cuda-11.7/lib64;\$ORIGIN" -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
 ```
 
-#### Fixing Compatibility Issues with Old CUDA and New glibc
+#### 修复旧 CUDA 与新 glibc 的兼容问题
 
-If you try to use an old CUDA version (e.g. v11.7) with a new glibc version you can get errors like this:
+旧版 CUDA(如 v11.7)搭配新版 glibc 可能报这样的错:
 
 ```
 /usr/include/bits/mathcalls.h(83): error: exception specification is
@@ -241,8 +243,7 @@ If you try to use an old CUDA version (e.g. v11.7) with a new glibc version you 
   here
 ```
 
-It seems the least bad solution is to patch the CUDA installation to declare the correct signatures.
-Replace the following lines in `/path/to/your/cuda/installation/targets/x86_64-linux/include/crt/math_functions.h`:
+目前看来最不坏的办法是给 CUDA 安装打补丁,声明正确的签名。把 `/path/to/your/cuda/installation/targets/x86_64-linux/include/crt/math_functions.h` 中的以下行:
 
 ```C++
 // original lines
@@ -262,9 +263,9 @@ extern __DEVICE_FUNCTIONS_DECL__ __device_builtin__ double                 rsqrt
 extern __DEVICE_FUNCTIONS_DECL__ __device_builtin__ float                  rsqrtf(float x) noexcept (true);
 ```
 
-### Runtime CUDA environmental variables
+### 运行时 CUDA 环境变量
 
-You may set the [cuda environmental variables](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#env-vars) at runtime.
+可以在运行时设置 [CUDA 环境变量](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#env-vars)。
 
 ```bash
 # Use `CUDA_VISIBLE_DEVICES` to hide the first compute device.
@@ -273,108 +274,104 @@ CUDA_VISIBLE_DEVICES="-0" ./build/bin/llama-server --model /srv/models/llama.ggu
 
 #### CUDA_SCALE_LAUNCH_QUEUES
 
-The environment variable [`CUDA_SCALE_LAUNCH_QUEUES`](https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/environment-variables.html#cuda-scale-launch-queues) controls the size of CUDA's command buffer, which determines how many GPU operations can be queued before the CPU must wait for the GPU to catch up. A larger buffer reduces CPU-side stalls and allows more work to be queued on a GPU.
+环境变量 [`CUDA_SCALE_LAUNCH_QUEUES`](https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/environment-variables.html#cuda-scale-launch-queues) 控制 CUDA 命令缓冲区大小,决定 CPU 等待 GPU 追上前能排队多少 GPU 操作。更大的缓冲区能减少 CPU 侧停顿,允许在 GPU 上排更多任务。
 
-Consider setting `CUDA_SCALE_LAUNCH_QUEUES=4x`, which increases the CUDA command buffer to 4 times its default size. This optimization is particularly beneficial for **Multi-GPU setups with pipeline parallelism**, where it significantly improves prompt processing throughput by allowing more operations to be enqueued across GPUs.
+建议尝试 `CUDA_SCALE_LAUNCH_QUEUES=4x`,把 CUDA 命令缓冲区扩大到默认的 4 倍。该优化对**带流水线并行的多 GPU 设置**尤其有效,能显著提升 prompt 处理吞吐。
 
 #### GGML_CUDA_CUBLAS_COMPUTE_TYPE
 
-Override default, speed-optimized compute types for cuBLAS matrix multiplications.
-Legal values: `auto`, `f16`, `fp16`, `bf16`, `f32`, `fp32`.
+覆盖 cuBLAS 矩阵乘法默认的速度优先计算类型。
+合法值:`auto`、`f16`、`fp16`、`bf16`、`f32`、`fp32`。
 
-### Unified Memory
+### 统一内存(Unified Memory)
 
-The environment variable `GGML_CUDA_ENABLE_UNIFIED_MEMORY=1` can be used to enable unified memory in Linux. This allows swapping to system RAM instead of crashing when the GPU VRAM is exhausted. In Windows this setting is available in the NVIDIA control panel as `System Memory Fallback`.
+在 Linux 上可用环境变量 `GGML_CUDA_ENABLE_UNIFIED_MEMORY=1` 启用统一内存:GPU 显存耗尽时换页到系统内存而不是崩溃。Windows 上对应 NVIDIA 控制面板中的 `System Memory Fallback`。
 
-### Peer Access
+### 点对点访问(Peer Access)
 
-The environment variable `GGML_CUDA_P2P` can be set to enable peer-to-peer access between multiple GPUs, allowing them to transfer data directly rather than to go through system memory.
-Requires driver support (usually restricted to workstation/datacenter GPUs).
-May cause crashes or corrupted outputs for some motherboards and BIOS settings (e.g. IOMMU).
+环境变量 `GGML_CUDA_P2P` 可启用多 GPU 之间的点对点访问,让 GPU 直接互传数据而不经过系统内存。
+需要驱动支持(通常仅工作站/数据中心 GPU)。
+某些主板和 BIOS 设置(如 IOMMU)下可能导致崩溃或输出损坏。
 
-### Performance Tuning
+### 性能调优
 
-The following compilation options are also available to tweak performance:
+以下编译选项可用于调优性能:
 
-| Option                        | Legal values           | Default | Description                                                                                                                                                                                                                                                                                                                                                                      |
+| 选项                          | 合法值                 | 默认值  | 说明                                                                                                                                                                                                                                                                                                                                                                               |
 |-------------------------------|------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| GGML_CUDA_FORCE_MMQ           | Boolean                | false   | Force the use of custom matrix multiplication kernels for quantized models instead of FP16 cuBLAS even if there is no int8 tensor core implementation available (affects V100, CDNA and RDNA3+). MMQ kernels are enabled by default on GPUs with int8 tensor core support. With MMQ force enabled, speed for large batch sizes will be worse but VRAM consumption will be lower. |
-| GGML_CUDA_FORCE_CUBLAS        | Boolean                | false   | Force the use of FP16 cuBLAS instead of custom matrix multiplication kernels for quantized models. There may be issues with numerical overflows (except for V100, CDNA and RDNA4 which use FP32 compute type by default) and memory use will be higher. Prompt processing may become faster on recent datacenter GPUs (the custom kernels were tuned primarily for RTX 3000/4000).   |
-| GGML_CUDA_FA_ALL_QUANTS       | Boolean                | false   | Compile support for all KV cache quantization type (combinations) for the FlashAttention CUDA kernels. More fine-grained control over KV cache size but compilation takes much longer.                                                                                                                                                                                           |
+| GGML_CUDA_FORCE_MMQ           | 布尔                   | false   | 强制对量化模型使用自定义矩阵乘内核,而不是 FP16 cuBLAS,即使没有 int8 tensor core 实现可用(影响 V100、CDNA、RDNA3+)。支持 int8 tensor core 的 GPU 默认启用 MMQ 内核。强制开启 MMQ 后,大批量速度变差,但显存占用更低。 |
+| GGML_CUDA_FORCE_CUBLAS        | 布尔                   | false   | 强制对量化模型使用 FP16 cuBLAS 而非自定义矩阵乘内核。可能有数值溢出问题(V100、CDNA、RDNA4 除外,它们默认用 FP32 计算类型),内存占用更高。在较新的数据中心 GPU 上 prompt 处理可能变快(自定义内核主要针对 RTX 3000/4000 调优)。   |
+| GGML_CUDA_FA_ALL_QUANTS       | 布尔                   | false   | 为 FlashAttention CUDA 内核编译全部 KV cache 量化类型(组合)的支持。KV cache 大小控制更细,但编译时间大幅增加。                                                                                                                                                                                                                                                           |
 
 ## MUSA
 
-This provides GPU acceleration using a Moore Threads GPU. Make sure to have the [MUSA SDK](https://developer.mthreads.com/musa/musa-sdk) installed.
+使用摩尔线程(Moore Threads)GPU 提供 GPU 加速。确保已安装 [MUSA SDK](https://developer.mthreads.com/musa/musa-sdk)。
 
-#### Download directly from Moore Threads
+#### 直接从摩尔线程下载
 
-You may find the official downloads here: [Moore Threads developer site](https://developer.mthreads.com/sdk/download/musa).
+官方下载页:[Moore Threads developer site](https://developer.mthreads.com/sdk/download/musa)。
 
-### Compilation
+### 编译
 
 ```bash
 cmake -B build -DGGML_MUSA=ON
 cmake --build build --config Release
 ```
 
-#### Override Compute Capability Specifications
+#### 覆盖算力规格
 
-By default, all supported compute capabilities are enabled. To customize this behavior, you can specify the `MUSA_ARCHITECTURES` option in the CMake command:
+默认启用所有受支持的算力。要自定义,可在 CMake 命令中指定 `MUSA_ARCHITECTURES`:
 
 ```bash
 cmake -B build -DGGML_MUSA=ON -DMUSA_ARCHITECTURES="21"
 cmake --build build --config Release
 ```
 
-This configuration enables only compute capability `2.1` (MTT S80) during compilation, which can help reduce compilation time.
+此配置只编译算力 `2.1`(MTT S80),可缩短编译时间。
 
-#### Compilation options
+#### 编译选项
 
-Most of the compilation options available for CUDA should also be available for MUSA, though they haven't been thoroughly tested yet.
+CUDA 可用的大部分编译选项对 MUSA 同样适用,只是尚未经过充分测试。
 
-- For static builds, add `-DBUILD_SHARED_LIBS=OFF` and `-DCMAKE_POSITION_INDEPENDENT_CODE=ON`:
+- 静态构建,加 `-DBUILD_SHARED_LIBS=OFF` 和 `-DCMAKE_POSITION_INDEPENDENT_CODE=ON`:
   ```
   cmake -B build -DGGML_MUSA=ON \
     -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON
   cmake --build build --config Release
   ```
 
-### Runtime MUSA environmental variables
+### 运行时 MUSA 环境变量
 
-You may set the [musa environmental variables](https://docs.mthreads.com/musa-sdk/musa-sdk-doc-online/programming_guide/Z%E9%99%84%E5%BD%95/) at runtime.
+可在运行时设置 [MUSA 环境变量](https://docs.mthreads.com/musa-sdk/musa-sdk-doc-online/programming_guide/Z%E9%99%84%E5%BD%95/)。
 
 ```bash
 # Use `MUSA_VISIBLE_DEVICES` to hide the first compute device.
 MUSA_VISIBLE_DEVICES="-0" ./build/bin/llama-server --model /srv/models/llama.gguf
 ```
 
-### Unified Memory
+### 统一内存
 
-The environment variable `GGML_CUDA_ENABLE_UNIFIED_MEMORY=1` can be used to enable unified memory in Linux. This allows swapping to system RAM instead of crashing when the GPU VRAM is exhausted.
+Linux 上可用环境变量 `GGML_CUDA_ENABLE_UNIFIED_MEMORY=1` 启用统一内存:GPU 显存耗尽时换页到系统内存而不是崩溃。
 
 ## HIP
 
-This provides GPU acceleration on HIP-supported AMD GPUs.
-Make sure to have ROCm installed.
-You can download it from your Linux distro's package manager or from here: [ROCm Quick Start (Linux)](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/tutorial/quick-start.html#rocm-install-quick).
+在支持 HIP 的 AMD GPU 上提供 GPU 加速。
+确保已安装 ROCm,可从发行版包管理器安装,或从这里下载:[ROCm Quick Start (Linux)](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/tutorial/quick-start.html#rocm-install-quick)。
 
-- Using `CMake` for Linux (assuming a gfx1030-compatible AMD GPU):
+- Linux 上使用 `CMake`(假设是 gfx1030 兼容的 AMD GPU):
   ```bash
   HIPCXX="$(hipconfig -l)/clang" HIP_PATH="$(hipconfig -R)" \
       cmake -S . -B build -DGGML_HIP=ON -DGPU_TARGETS=gfx1030 -DCMAKE_BUILD_TYPE=Release \
       && cmake --build build --config Release -- -j 16
   ```
 
-  Note: `GPU_TARGETS` is optional, omitting it will build the code for all GPUs in the current system.
+  注意:`GPU_TARGETS` 可选,省略时会为当前系统所有 GPU 编译。
 
-  Note that if you get the following error:
+  如果报如下错误:
   ```
   clang: error: cannot find ROCm device library; provide its path via '--rocm-path' or '--rocm-device-lib-path', or pass '-nogpulib' to build without ROCm device library
   ```
-  Try searching for a directory under `HIP_PATH` that contains the file
-  `oclc_abi_version_400.bc`. Then, add the following to the start of the
-  command: `HIP_DEVICE_LIB_PATH=<directory-you-just-found>`, so something
-  like:
+  尝试在 `HIP_PATH` 下搜索包含 `oclc_abi_version_400.bc` 文件的目录,然后在命令开头加上 `HIP_DEVICE_LIB_PATH=<刚找到的目录>`,类似:
   ```bash
   HIPCXX="$(hipconfig -l)/clang" HIP_PATH="$(hipconfig -p)" \
   HIP_DEVICE_LIB_PATH=<directory-you-just-found> \
@@ -382,33 +379,34 @@ You can download it from your Linux distro's package manager or from here: [ROCm
       && cmake --build build -- -j 16
   ```
 
-- Using `CMake` for Windows (using x64 Native Tools Command Prompt for VS, and assuming a gfx1100-compatible AMD GPU):
+- Windows 上使用 `CMake`(用 x64 Native Tools Command Prompt for VS,假设是 gfx1100 兼容的 AMD GPU):
   ```bash
   set PATH=%HIP_PATH%\bin;%PATH%
   cmake -S . -B build -G Ninja -DGPU_TARGETS=gfx1100 -DGGML_HIP=ON -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release
   cmake --build build
   ```
-  If necessary, adapt `GPU_TARGETS` to the GPU arch you want to compile for. The above example uses `gfx1100` that corresponds to Radeon RX 7900XTX/XT/GRE. You can find a list of targets [here](https://llvm.org/docs/AMDGPUUsage.html#processors)
-  Find your gpu version string by matching the most significant version information from `rocminfo | grep gfx | head -1 | awk '{print $2}'` with the list of processors, e.g. `gfx1035` maps to `gfx1030`.
+  如有必要,把 `GPU_TARGETS` 改成你要编译的 GPU 架构。上面的示例用 `gfx1100`,对应 Radeon RX 7900XTX/XT/GRE。目标列表见[这里](https://llvm.org/docs/AMDGPUUsage.html#processors)。
+  用 `rocminfo | grep gfx | head -1 | awk '{print $2}'` 的输出匹配处理器列表中最主要的版本信息,找到你的 GPU 版本串,例如 `gfx1035` 映射到 `gfx1030`。
 
 
-The environment variable [`HIP_VISIBLE_DEVICES`](https://rocm.docs.amd.com/en/latest/understand/gpu_isolation.html#hip-visible-devices) can be used to specify which GPU(s) will be used.
-If your GPU is not officially supported you can use the environment variable [`HSA_OVERRIDE_GFX_VERSION`] set to a similar GPU, for example 10.3.0 on RDNA2 (e.g. gfx1030, gfx1031, or gfx1035) or 11.0.0 on RDNA3. Note that [`HSA_OVERRIDE_GFX_VERSION`] is [not supported on Windows](https://github.com/ROCm/ROCm/issues/2654)
+环境变量 [`HIP_VISIBLE_DEVICES`](https://rocm.docs.amd.com/en/latest/understand/gpu_isolation.html#hip-visible-devices) 可指定使用哪些 GPU。
+如果官方不支持你的 GPU,可以把环境变量 [`HSA_OVERRIDE_GFX_VERSION`] 设成相近 GPU 的版本,例如 RDNA2 用 10.3.0(如 gfx1030、gfx1031、gfx1035),RDNA3 用 11.0.0。注意 [`HSA_OVERRIDE_GFX_VERSION`] [在 Windows 上不受支持](https://github.com/ROCm/ROCm/issues/2654)。
 
-### Unified Memory
+### 统一内存
 
-On Linux it is possible to use unified memory architecture (UMA) to share main memory between the CPU and integrated GPU by setting environment variable `GGML_CUDA_ENABLE_UNIFIED_MEMORY=1`. However, this hurts performance for non-integrated GPUs (but enables working with integrated GPUs).
+Linux 上可通过环境变量 `GGML_CUDA_ENABLE_UNIFIED_MEMORY=1` 使用统一内存架构(UMA)在 CPU 与核显之间共享主内存。不过这会拖累非核显 GPU 的性能(但能让核显可用)。
 
 ## Vulkan
 
-### For Windows Users:
+### Windows 用户:
+
 **w64devkit**
 
-Download and extract [`w64devkit`](https://github.com/skeeto/w64devkit/releases).
+下载并解压 [`w64devkit`](https://github.com/skeeto/w64devkit/releases)。
 
-Download and install the [`Vulkan SDK`](https://vulkan.lunarg.com/sdk/home#windows) with the default settings.
+按默认设置下载安装 [`Vulkan SDK`](https://vulkan.lunarg.com/sdk/home#windows)。
 
-Launch `w64devkit.exe` and run the following commands to copy Vulkan dependencies:
+启动 `w64devkit.exe`,执行以下命令复制 Vulkan 依赖:
 ```sh
 SDK_VERSION=1.3.283.0
 cp /VulkanSDK/$SDK_VERSION/Bin/glslc.exe $W64DEVKIT_HOME/bin/
@@ -423,7 +421,7 @@ EOF
 
 ```
 
-Switch into the `llama.cpp` directory and build using CMake.
+切换到 `llama.cpp` 目录,用 CMake 构建。
 ```sh
 cmake -B build -DGGML_VULKAN=ON
 cmake --build build --config Release
@@ -431,22 +429,22 @@ cmake --build build --config Release
 
 **Git Bash MINGW64**
 
-Download and install [`Git-SCM`](https://git-scm.com/downloads/win) with the default settings
+按默认设置下载安装 [`Git-SCM`](https://git-scm.com/downloads/win)。
 
-Download and install [`Visual Studio Community Edition`](https://visualstudio.microsoft.com/) and make sure you select `C++`
+下载安装 [`Visual Studio Community Edition`](https://visualstudio.microsoft.com/),记得勾选 `C++`。
 
-Download and install [`CMake`](https://cmake.org/download/) with the default settings
+按默认设置下载安装 [`CMake`](https://cmake.org/download/)。
 
-Download and install the [`Vulkan SDK`](https://vulkan.lunarg.com/sdk/home#windows) with the default settings.
+按默认设置下载安装 [`Vulkan SDK`](https://vulkan.lunarg.com/sdk/home#windows)。
 
-Go into your `llama.cpp` directory and right click, select `Open Git Bash Here` and then run the following commands
+进入 `llama.cpp` 目录,右键选 `Open Git Bash Here`,然后执行:
 
 ```
 cmake -B build -DGGML_VULKAN=ON
 cmake --build build --config Release
 ```
 
-Now you can load the model in conversation mode using `Vulkan`
+现在就可以用 `Vulkan` 以会话模式加载模型了:
 
 ```sh
 build/bin/Release/llama-cli -m "[PATH TO MODEL]" -ngl 100 -c 16384 -t 10 -n -2 -cnv
@@ -454,7 +452,7 @@ build/bin/Release/llama-cli -m "[PATH TO MODEL]" -ngl 100 -c 16384 -t 10 -n -2 -
 
 **MSYS2**
 
-Install [MSYS2](https://www.msys2.org/) and then run the following commands in a UCRT terminal to install dependencies.
+安装 [MSYS2](https://www.msys2.org/),在 UCRT 终端中执行以下命令安装依赖。
 ```sh
 pacman -S git \
     mingw-w64-ucrt-x86_64-gcc \
@@ -464,15 +462,15 @@ pacman -S git \
     mingw-w64-ucrt-x86_64-spirv-headers
 ```
 
-Switch into the `llama.cpp` directory and build using CMake.
+切换到 `llama.cpp` 目录,用 CMake 构建。
 ```sh
 cmake -B build -DGGML_VULKAN=ON
 cmake --build build --config Release
 ```
 
-### For Docker users:
+### Docker 用户:
 
-You don't need to install the Vulkan SDK. It will be installed inside the container.
+无需安装 Vulkan SDK,容器内会自动装好。
 
 ```sh
 # Build the image
@@ -482,38 +480,38 @@ docker build -t llama-cpp-vulkan --target light -f .devops/vulkan.Dockerfile .
 docker run -it --rm -v "$(pwd):/app:Z" --device /dev/dri/renderD128:/dev/dri/renderD128 --device /dev/dri/card1:/dev/dri/card1 llama-cpp-vulkan -m "/app/models/YOUR_MODEL_FILE" -p "Building a website can be done in 10 simple steps:" -n 400 -e -ngl 33
 ```
 
-### For Linux users:
+### Linux 用户:
 
-#### Using the LunarG Vulkan SDK
+#### 使用 LunarG Vulkan SDK
 
-First, follow the official LunarG instructions for the installation and setup of the Vulkan SDK in the [Getting Started with the Linux Tarball Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/linux/getting_started.html) guide.
+先按照官方 LunarG 指南 [Getting Started with the Linux Tarball Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/linux/getting_started.html) 安装配置 Vulkan SDK。
 
 > [!IMPORTANT]
-> After completing the first step, ensure that you have used the `source` command on the `setup_env.sh` file inside of the Vulkan SDK in your current terminal session. Otherwise, the build won't work. Additionally, if you close out of your terminal, you must perform this step again if you intend to perform a build. However, there are ways to make this persistent. Refer to the Vulkan SDK guide linked in the first step for more information about any of this.
+> 第一步完成后,务必在当前终端会话中对 Vulkan SDK 内的 `setup_env.sh` 执行 `source`。否则构建无法进行。另外,关掉终端后若要再次构建,必须重新执行该步骤。当然也有持久化的办法,详见第一步链接的 Vulkan SDK 指南。
 
-#### Using system packages
+#### 使用系统软件包
 
-On Debian / Ubuntu, you can install the required dependencies using:
+Debian / Ubuntu 上可以这样安装所需依赖:
 ```sh
 sudo apt-get install libvulkan-dev glslc spirv-headers
 ```
 
-SPIRV-Headers (`spirv/unified1/spirv.hpp`) are required for the Vulkan backend and are **not** always pulled in by the Vulkan loader dev package alone. Other distros use names such as `spirv-headers` (Ubuntu / Debian / Arch), or `spirv-headers-devel` (Fedora / openSUSE). On Windows, the LunarG Vulkan SDK’s `Include` directory already contains these headers.
+Vulkan 后端需要 SPIRV-Headers(`spirv/unified1/spirv.hpp`),**并不是**所有发行版的 Vulkan loader 开发包都会带上它。其他发行版的包名一般是 `spirv-headers`(Ubuntu / Debian / Arch)或 `spirv-headers-devel`(Fedora / openSUSE)。Windows 上 LunarG Vulkan SDK 的 `Include` 目录已包含这些头文件。
 
-#### Common steps
+#### 通用步骤
 
-Second, after verifying that you have followed all of the SDK installation/setup steps, use this command to make sure before proceeding:
+确认已按 SDK 安装/配置步骤全部做完后,先用这个命令检查:
 ```bash
 vulkaninfo
 ```
 
-Then, assuming you have `cd` into your llama.cpp folder and there are no errors with running `vulkaninfo`, you can proceed to build llama.cpp using the CMake commands below:
+然后,假设你已 `cd` 进 llama.cpp 目录且 `vulkaninfo` 没有报错,就可以用下面的 CMake 命令构建 llama.cpp:
 ```bash
 cmake -B build -DGGML_VULKAN=1
 cmake --build build --config Release
 ```
 
-Finally, after finishing your build, you should be able to do something like this:
+构建完成后,应该可以这样做:
 ```bash
 # Test the output binary
 # "-ngl 99" should offload all of the layers to GPU for most (if not all) models.
@@ -523,122 +521,122 @@ Finally, after finishing your build, you should be able to do something like thi
 # ggml_vulkan: Using Intel(R) Graphics (ADL GT2) | uma: 1 | fp16: 1 | warp size: 32
 ```
 
-### For Mac users:
+### Mac 用户:
 
-Generally, follow LunarG's [Getting Started with the MacOS Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) guide for installation and setup of the Vulkan SDK. There are two options of Vulkan drivers on macOS, both of which implement translation layers to map Vulkan to Metal. They can be hot-swapped by setting the `VK_ICD_FILENAMES` environment variable to point to the respective ICD JSON file.
+一般按 LunarG 的 [Getting Started with the MacOS Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) 指南安装配置即可。macOS 上有两种 Vulkan 驱动,都通过转换层把 Vulkan 映射到 Metal。可以通过把 `VK_ICD_FILENAMES` 环境变量指向对应 ICD JSON 文件来热切换。
 
-Check the box for "KosmicKrisp" during the LunarG Vulkan SDK installation.
+安装 LunarG Vulkan SDK 时勾选 "KosmicKrisp"。
 
-Set environment variable for the LunarG Vulkan SDK after installation (and optionally add to your shell profile for persistence):
+安装后为 LunarG Vulkan SDK 设置环境变量(可选写入 shell profile 以持久化):
 ```bash
 source /path/to/vulkan-sdk/setup-env.sh
 ```
 
-#### Using MoltenVK
+#### 使用 MoltenVK
 
-MoltenVK is the default Vulkan driver installed with the LunarG Vulkan SDK on macOS, so you can use the above environment variable settings as is.
+MoltenVK 是 macOS 上 LunarG Vulkan SDK 默认安装的 Vulkan 驱动,上面的环境变量设置原样可用。
 
-#### Using KosmicKrisp
+#### 使用 KosmicKrisp
 
-Override the environment variable for KosmicKrisp:
+为 KosmicKrisp 覆盖环境变量:
 ```bash
 export VK_ICD_FILENAMES=$VULKAN_SDK/share/vulkan/icd.d/libkosmickrisp_icd.json
 export VK_DRIVER_FILES=$VULKAN_SDK/share/vulkan/icd.d/libkosmickrisp_icd.json
 ```
 
-#### Build
+#### 构建
 
-This is the only step different from [above](#common-steps) instructions.
+这是唯一与[上文](#通用步骤)不同的步骤。
 ```bash
 cmake -B build -DGGML_VULKAN=1 -DGGML_METAL=OFF
 cmake --build build --config Release
 ```
 
 ## CANN
-This provides NPU acceleration using the AI cores of your Ascend NPU. And [CANN](https://www.hiascend.com/en/software/cann) is a hierarchical APIs to help you to quickly build AI applications and service based on Ascend NPU.
+使用昇腾(Ascend)NPU 的 AI 核心提供 NPU 加速。[CANN](https://www.hiascend.com/en/software/cann) 是一套分层 API,帮助基于昇腾 NPU 快速构建 AI 应用与服务。
 
-For more information about Ascend NPU in [Ascend Community](https://www.hiascend.com/en/).
+更多昇腾 NPU 信息见 [Ascend Community](https://www.hiascend.com/en/)。
 
-Make sure to have the CANN toolkit installed. You can download it from here: [CANN Toolkit](https://www.hiascend.com/developer/download/community/result?module=cann)
+确保已安装 CANN toolkit,下载地址:[CANN Toolkit](https://www.hiascend.com/developer/download/community/result?module=cann)。
 
-Go to `llama.cpp` directory and build using CMake.
+进入 `llama.cpp` 目录,用 CMake 构建。
 ```bash
 cmake -B build -DGGML_CANN=on -DCMAKE_BUILD_TYPE=release
 cmake --build build --config release
 ```
 
-You can test with:
+可以用下面的命令测试:
 
 ```bash
 ./build/bin/llama-cli -m PATH_TO_MODEL -p "Building a website can be done in 10 steps:" -ngl 32
 ```
 
-If the following info is output on screen, you are using `llama.cpp` with the CANN backend:
+如果屏幕输出以下信息,说明你正在使用带 CANN 后端的 `llama.cpp`:
 ```bash
 llm_load_tensors:       CANN model buffer size = 13313.00 MiB
 llama_new_context_with_model:       CANN compute buffer size =  1260.81 MiB
 ```
 
-For detailed info, such as model/device supports, CANN install, please refer to [llama.cpp for CANN](./backend/CANN.md).
+详细信息(模型/设备支持、CANN 安装等)见 [llama.cpp for CANN](./backend/CANN.md)。
 
 ## ZenDNN
 
-ZenDNN provides optimized deep learning primitives for AMD EPYC™ CPUs. It accelerates matrix multiplication operations for inference workloads.
+ZenDNN 为 AMD EPYC™ CPU 提供优化的深度学习原语,可加速推理负载中的矩阵乘法运算。
 
-### Compilation
+### 编译
 
-- Using `CMake` on Linux (automatic build):
+- Linux 上使用 `CMake`(自动构建):
 
     ```bash
     cmake -B build -DGGML_ZENDNN=ON
     cmake --build build --config Release
     ```
 
-    The first build will automatically download and build ZenDNN, which may take 5-10 minutes. Subsequent builds will be much faster.
+    首次构建会自动下载并编译 ZenDNN,可能需要 5-10 分钟,后续构建会快很多。
 
-- Using `CMake` with custom ZenDNN installation:
+- 使用自定义 ZenDNN 安装路径:
 
     ```bash
     cmake -B build -DGGML_ZENDNN=ON -DZENDNN_ROOT=/path/to/zendnn/install
     cmake --build build --config Release
     ```
 
-### Testing
+### 测试
 
-You can test with:
+可以用下面的命令测试:
 
 ```bash
 ./build/bin/llama-cli -m PATH_TO_MODEL -p "Building a website can be done in 10 steps:" -n 50
 ```
 
-For detailed information about hardware support, setup instructions, and performance optimization, refer to [llama.cpp for ZenDNN](./backend/ZenDNN.md).
+硬件支持、配置说明、性能优化等详细信息见 [llama.cpp for ZenDNN](./backend/ZenDNN.md)。
 
 ## Arm® KleidiAI™
-KleidiAI provides optimized Arm CPU microkernels used by the ggml CPU backend. Enabling it at build time makes those kernels available; it does not force every operation to use KleidiAI. At runtime, llama.cpp selects the best compatible CPU kernel from the detected CPU features, tensor type, operation shape, and active backend priority.
+KleidiAI 提供优化的 Arm CPU 微内核(microkernel),供 ggml CPU 后端使用。构建时启用只是让这些内核可用,并不强制每个算子都走 KleidiAI。运行时,llama.cpp 会根据检测到的 CPU 特性、张量类型、算子形状和当前后端优先级,选择最合适的兼容 CPU 内核。
 
-Supported targets:
+支持的目标:
 
-| Platform | Supported ABI / architecture | Notes |
+| 平台 | 支持的 ABI / 架构 | 说明 |
 | --- | --- | --- |
-| Linux | AArch64 / arm64 | Runtime CPU feature detection is automatic. |
-| Android | `arm64-v8a` | Use the Android NDK command below for a portable build. |
-| Apple | arm64 | Runtime CPU feature detection is automatic. Non-streaming SVE vector length is treated as unavailable. |
-| Windows | arm64 | Runtime CPU feature detection is automatic. SMCU count is treated as unknown until a detection path is verified. |
+| Linux | AArch64 / arm64 | 运行时自动检测 CPU 特性。 |
+| Android | `arm64-v8a` | 便携构建请使用下方的 Android NDK 命令。 |
+| Apple | arm64 | 运行时自动检测 CPU 特性。非流式 SVE 向量长度视为不可用。 |
+| Windows | arm64 | 运行时自动检测 CPU 特性。在验证检测路径前,SMCU 数量视为未知。 |
 
-`GGML_CPU_KLEIDIAI=ON` is valid only for AArch64/arm64 builds. Do not enable it for x86, 32-bit Arm, or Android ABIs other than `arm64-v8a`.
+`GGML_CPU_KLEIDIAI=ON` 仅对 AArch64/arm64 构建有效。不要在 x86、32 位 Arm 或 `arm64-v8a` 之外的 Android ABI 上启用。
 
-### Native AArch64/arm64 build
+### 原生 AArch64/arm64 构建
 
-From the llama.cpp source directory:
+在 llama.cpp 源码目录:
 
 ```bash
 cmake -S . -B build -DGGML_CPU_KLEIDIAI=ON
 cmake --build build --config Release
 ```
 
-### Android arm64-v8a NDK build
+### Android arm64-v8a NDK 构建
 
-Set `ANDROID_NDK` to the Android NDK root, then run the following from the llama.cpp source directory. This command configures a portable Android `arm64-v8a` build with KleidiAI enabled and avoids Android dependencies that are not part of the NDK stable native API set.
+把 `ANDROID_NDK` 指向 Android NDK 根目录,在 llama.cpp 源码目录执行以下命令。该命令配置便携的 Android `arm64-v8a` 构建并启用 KleidiAI,同时避免依赖不属于 NDK 稳定原生 API 集合的 Android 组件。
 
 ```bash
 cmake -S . -B build-android \
@@ -655,68 +653,62 @@ cmake --build build-android --config Release --parallel
 cmake --install build-android --prefix {install-dir} --config Release
 ```
 
-Important Android options:
+重要 Android 选项:
 
-- `GGML_CPU_KLEIDIAI=ON` enables KleidiAI for Android `arm64-v8a`.
-- `GGML_NATIVE=OFF` is required for cross-compilation because the build host CPU is not the Android target CPU.
-- `GGML_OPENMP=OFF` avoids adding an OpenMP runtime dependency to this NDK command-line build.
-- `GGML_LLAMAFILE=OFF` avoids the llamafile backend, which is not supported on Android.
-- `LLAMA_OPENSSL=OFF` avoids depending on OpenSSL, which is not part of the Android NDK stable native API set.
+- `GGML_CPU_KLEIDIAI=ON`:为 Android `arm64-v8a` 启用 KleidiAI。
+- `GGML_NATIVE=OFF`:交叉编译必需,因为构建宿主 CPU 不是 Android 目标 CPU。
+- `GGML_OPENMP=OFF`:避免在 NDK 命令行构建中引入 OpenMP 运行时依赖。
+- `GGML_LLAMAFILE=OFF`:避开 Android 不支持的 llamafile 后端。
+- `LLAMA_OPENSSL=OFF`:避免依赖不属于 Android NDK 稳定原生 API 集合的 OpenSSL。
 
-The Android Studio project under `examples/llama.android` enables KleidiAI automatically for `arm64-v8a`. For Android command-line CMake builds on `arm64-v8a`, pass `-DGGML_CPU_KLEIDIAI=ON` explicitly.
+`examples/llama.android` 下的 Android Studio 工程会为 `arm64-v8a` 自动启用 KleidiAI。`arm64-v8a` 上的 Android 命令行 CMake 构建需显式传 `-DGGML_CPU_KLEIDIAI=ON`。
 
-Global -march flags such as `-march=armv8.7a` flag are not required for a portable Android `arm64-v8a` build. Global `-march` flags raise the baseline instruction set for generic code. No manual architecture-specific source selection is required; llama.cpp selects compatible KleidiAI kernels at runtime. The KleidiAI libraries internal CMake handles the -march flags for each particular kernel.
+便携的 Android `arm64-v8a` 构建不需要 `-march=armv8.7a` 之类的全局 -march 标志——全局 -march 会抬高通用代码的基线指令集。无需手动选择架构相关源码,llama.cpp 会在运行时选择兼容的 KleidiAI 内核,各内核的 -march 由 KleidiAI 库内部 CMake 处理。
 
-### Verifying the build
+### 验证构建
 
-Run an installed or in-tree binary:
+运行安装后或源码树内的二进制:
 
 ```bash
 ./build/bin/llama-cli -m PATH_TO_MODEL -p "What is a car?"
 ```
 
-If KleidiAI is enabled, the output contains a line similar to:
+如果启用了 KleidiAI,输出中会有类似这样的一行:
 
 ```
 load_tensors: CPU_KLEIDIAI model buffer size =  3474.00 MiB
 ```
 
-This confirms that the model has tensors allocated through the KleidiAI CPU buffer. It does not prove that every operation, or any specific SME-family operation, used a KleidiAI microkernel. Runtime CPU features, tensor type, operation shape, and backend priority still control dispatch.
+这说明模型张量是通过 KleidiAI CPU 缓冲区分配的,但不代表每个算子(或任何特定 SME 系算子)都用了 KleidiAI 微内核——运行时 CPU 特性、张量类型、算子形状和后端优先级仍然决定分发。按构建目标不同,另一个后端可能优先级更高。要强制走 CPU,可在构建期禁用更高优先级后端(如 `-DGGML_METAL=OFF`),或在支持的运行时用 `--device none` 之类的设备选项。
 
-Depending on the build target, another backend may have higher priority than the CPU backend. To force CPU execution for a run, disable higher priority backends at build time, for example `-DGGML_METAL=OFF`, or use a runtime device option such as `--device none` where supported.
+### 运行时分发
 
-### Runtime dispatch
+KleidiAI 微内核用到 dotprod、i8mm、SVE、SME/SME2 等 Arm CPU 特性。构建期配置让内核可用,运行时分发为检测到的 CPU 和算子选择兼容内核,较老或特性较少的 CPU 会自动回退。
 
-KleidiAI microkernels use Arm CPU features such as dotprod, i8mm, SVE, and SME/SME2. Build-time configuration makes the kernels available. Runtime dispatch selects a compatible kernel for the detected CPU and operation. Older or lower-feature CPUs fall back automatically to compatible kernels.
+KleidiAI 加速 F32 和常见量化格式的部分 `GGML_OP_MUL_MAT` 路径。实际覆盖取决于内置 KleidiAI 版本和 llama.cpp 运行时选择器,因此即使 CPU 支持所需 Arm 特性,不支持的张量类型、算子形状或更高优先级后端也可能绕过 KleidiAI——这也是 SME 硬件上模型可能没走 SME 内核的原因。当前 llama.cpp 的 KleidiAI SVE 选择器只在运行时 SVE 向量长度恰为 QK8_0 字节(32 字节)时启用 SVE 内核:Linux/Android 运行时查询,Apple 和 Windows arm64 因无法可靠获得该值而视为未知(SVE 可用性同样如此),Windows arm64 的 SMCU 数量在验证检测机制前也视为未知。可用 SME 系内核集合取决于内置 KleidiAI 版本和检测到的 CPU 能力;生产配置不需要任何 KleidiAI 运行时环境变量。
 
-KleidiAI accelerates selected `GGML_OP_MUL_MAT` paths for F32 and common quantized formats. Exact coverage depends on the bundled KleidiAI version and the llama.cpp runtime selector, so unsupported tensor types, unsupported operation shapes, or higher priority backends may bypass KleidiAI even when the CPU supports the required Arm feature. This is also why a model may not use SME-family kernels on SME-capable hardware.
+### 诊断与调试覆盖
 
-The current llama.cpp KleidiAI SVE selector only enables SVE kernels when the runtime SVE vector length is known to be QK8_0 bytes, currently 32 bytes. Linux and Android query this at runtime. Apple reports SVE capability separately from userspace non-streaming SVE availability, so llama.cpp treats the SVE vector length as unknown there. Windows exposes SVE feature presence but not the runtime SVE vector length used by this selector, so that value is also treated as unknown. Windows arm64 also treats SMCU count as unknown until a detection mechanism is verified.
+KleidiAI 运行时环境变量是诊断/调试用的覆盖项,不是生产配置,日常使用请保持未设置。
 
-The set of available SME-family kernels depends on the bundled KleidiAI version and the detected CPU capabilities. Production configuration does not require any KleidiAI runtime environment variables.
+`GGML_KLEIDIAI_SME` 控制 SME 系内核选择,并覆盖分配给所选量化 SME 系内核的最大线程数:
 
-### Diagnostics and debug overrides
+- 未设置:自动运行时检测。
+- `0`:禁用 SME 系内核。
+- `<n> > 0`:启用兼容的 SME 系内核,量化 SME 系内核最多允许 `<n>` 个线程。
 
-KleidiAI runtime environment variables are diagnostics/debug overrides, not production configuration. Leave them unset for normal use.
+Windows arm64 上,在自动 SMCU 数量检测验证之前,可用 `GGML_KLEIDIAI_SME=<n>` 作为 SME 线程上限标定的临时诊断/调试覆盖。
 
-`GGML_KLEIDIAI_SME` controls SME-family kernel selection and overrides the maximum number of threads assigned to selected quantized SME-family kernels:
-
-- Not set: use automatic runtime detection.
-- `0`: disable SME-family kernels.
-- `<n> > 0`: enable compatible SME-family kernels and allow up to `<n>` threads for quantized SME-family kernels.
-
-On Windows arm64, use `GGML_KLEIDIAI_SME=<n>` as the temporary diagnostics/debug override for SME thread-cap calibration until automatic SMCU count detection is verified.
-
-If the CPU does not support the required SME-family capability for a bundled kernel, that kernel is disabled regardless of the environment variable.
+如果 CPU 不支持某个内置内核所需的 SME 系能力,无论环境变量如何,该内核都会被禁用。
 
 ## OpenCL
 
-This provides GPU acceleration through OpenCL on recent Adreno GPU.
-More information about OpenCL backend can be found in [OPENCL.md](./backend/OPENCL.md) for more information.
+通过 OpenCL 在较新的 Adreno GPU 上提供 GPU 加速。
+OpenCL 后端更多信息见 [OPENCL.md](./backend/OPENCL.md)。
 
 ### Android
 
-Assume NDK is available in `$ANDROID_NDK`. First, install OpenCL headers and ICD loader library if not available,
+假设 NDK 位于 `$ANDROID_NDK`。先安装 OpenCL 头文件和 ICD loader 库(如果没有),
 
 ```sh
 mkdir -p ~/dev/llm
@@ -741,7 +733,7 @@ ninja && \
 cp libOpenCL.so $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android
 ```
 
-Then build llama.cpp with OpenCL enabled,
+然后启用 OpenCL 构建 llama.cpp,
 
 ```sh
 cd ~/dev/llm
@@ -762,7 +754,7 @@ ninja
 
 ### Windows Arm64
 
-First, install OpenCL headers and ICD loader library if not available,
+先安装 OpenCL 头文件和 ICD loader 库(如果没有),
 
 ```powershell
 mkdir -p ~/dev/llm
@@ -787,7 +779,7 @@ cmake .. -G Ninja `
 cmake --build . --target install
 ```
 
-Then build llama.cpp with OpenCL enabled,
+然后启用 OpenCL 构建 llama.cpp,
 
 ```powershell
 cmake .. -G Ninja `
@@ -801,44 +793,44 @@ ninja
 
 ## Android
 
-To read documentation for how to build on Android, [click here](./android.md)
+Android 构建文档见[这里](./android.md)。
 
 ## WebGPU
 
-The WebGPU backend relies on [Dawn](https://dawn.googlesource.com/dawn). Follow the instructions [here](https://dawn.googlesource.com/dawn/+/refs/heads/main/docs/quickstart-cmake.md) to install Dawn locally so that llama.cpp can find it using CMake. The current implementation is up-to-date with Dawn commit `18eb229`.
+WebGPU 后端依赖 [Dawn](https://dawn.googlesource.com/dawn)。按[这里](https://dawn.googlesource.com/dawn/+/refs/heads/main/docs/quickstart-cmake.md)的说明在本地安装 Dawn,让 CMake 能找到它。当前实现与 Dawn 提交 `18eb229` 同步。
 
-In the llama.cpp directory, build with CMake:
+在 llama.cpp 目录用 CMake 构建:
 
 ```
 cmake -B build -DGGML_WEBGPU=ON
 cmake --build build --config Release
 ```
 
-### Browser Support
+### 浏览器支持
 
-WebGPU allows cross-platform access to the GPU from supported browsers. We utilize [Emscripten](https://emscripten.org/) to compile ggml's WebGPU backend to WebAssembly. Emscripten does not officially support WebGPU bindings yet, but Dawn currently maintains its own WebGPU bindings called emdawnwebgpu.
+WebGPU 允许受支持的浏览器跨平台访问 GPU。我们使用 [Emscripten](https://emscripten.org/) 把 ggml 的 WebGPU 后端编译为 WebAssembly。Emscripten 官方尚未支持 WebGPU 绑定,但 Dawn 自己维护了一套叫 emdawnwebgpu 的 WebGPU 绑定。
 
-Follow the instructions [here](https://dawn.googlesource.com/dawn/+/refs/heads/main/src/emdawnwebgpu/) to download or build the emdawnwebgpu package (Note that it might be safer to build the emdawnwebgpu package locally, so that it stays in sync with the version of Dawn you have installed above). When building using CMake, the path to the emdawnwebgpu port file needs to be set with the flag `EMDAWNWEBGPU_DIR`.
+按[这里](https://dawn.googlesource.com/dawn/+/refs/heads/main/src/emdawnwebgpu/)的说明下载或构建 emdawnwebgpu 包(注意,本地构建 emdawnwebgpu 包可能更稳妥,以便与你安装的 Dawn 版本保持同步)。用 CMake 构建时,需要用 `EMDAWNWEBGPU_DIR` 标志指定 emdawnwebgpu port 文件路径。
 
 ## IBM Z & LinuxONE
 
-To read documentation for how to build on IBM Z & LinuxONE, [click here](./build-s390x.md)
+IBM Z & LinuxONE 构建文档见[这里](./build-s390x.md)。
 
 ## OpenVINO
 
-[OpenVINO](https://docs.openvino.ai/) is an open-source toolkit for optimizing and deploying high-performance AI inference, specifically designed for Intel hardware (CPUs, GPUs, and NPUs).
+[OpenVINO](https://docs.openvino.ai/) 是用于优化和部署高性能 AI 推理的开源工具包,专为 Intel 硬件(CPU、GPU、NPU)设计。
 
-For build instructions and usage examples, refer to [OPENVINO.md](backend/OPENVINO.md).
+构建说明与用法示例见 [OPENVINO.md](backend/OPENVINO.md)。
 
 ### Hexagon
 
-Check [README.md](./backend/snapdragon/README.md) for target specific build and run info.
+特定目标的构建与运行信息见 [README.md](./backend/snapdragon/README.md)。
 
 ---
-## Notes about GPU-accelerated backends
+## 关于 GPU 加速后端的说明
 
-The GPU may still be used to accelerate some parts of the computation even when using the `-ngl 0` option. You can fully disable GPU acceleration by using `--device none`.
+即使使用 `-ngl 0` 选项,GPU 仍可能被用于加速部分计算。可以用 `--device none` 完全禁用 GPU 加速。
 
-In most cases, it is possible to build and use multiple backends at the same time. For example, you can build llama.cpp with both CUDA and Vulkan support by using the `-DGGML_CUDA=ON -DGGML_VULKAN=ON` options with CMake. At runtime, you can specify which backend devices to use with the `--device` option. To see a list of available devices, use the `--list-devices` option.
+大多数情况下,可以同时构建并使用多个后端。例如用 `-DGGML_CUDA=ON -DGGML_VULKAN=ON` 的 CMake 选项同时构建支持 CUDA 和 Vulkan 的 llama.cpp。运行时用 `--device` 选项指定使用哪些后端设备,`--list-devices` 选项可查看可用设备列表。
 
-Backends can be built as dynamic libraries that can be loaded dynamically at runtime. This allows you to use the same llama.cpp binary on different machines with different GPUs. To enable this feature, use the `GGML_BACKEND_DL` option when building.
+后端可以构建为动态库,在运行时动态加载。这样同一个 llama.cpp 二进制就能在不同 GPU 的机器上使用。启用该功能请在构建时使用 `GGML_BACKEND_DL` 选项。
